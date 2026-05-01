@@ -1,6 +1,6 @@
 # 🦎 Comodo Chains ETH Wallet Scanner
 
-An autonomous Ethereum wallet scanner that generates random BIP39 seed phrases, derives their addresses, and checks each one against the Etherscan API for any ETH balance or transaction history. Matches are instantly sent to your Telegram and saved to a CSV file.
+An autonomous multi-chain wallet scanner that generates random BIP39 seed phrases, derives their Ethereum addresses, and checks each one across 6 blockchains for native coin balances, ERC-20 token holdings, and transaction history. Matches are instantly sent to your Telegram and saved to a CSV file.
 
 Runs forever in infinite batches — fully autonomous, resumable, and rate-limit aware.
 
@@ -9,8 +9,10 @@ Runs forever in infinite batches — fully autonomous, resumable, and rate-limit
 ## Features
 
 - 🔑 Generates cryptographically random 12-word BIP39 seed phrases
-- 🔍 Checks ETH balance **and** transaction history via Etherscan API
-- 📬 Sends real-time Telegram alerts on every match
+- 🔍 Checks native balance across **6 chains** — Ethereum, BSC, Polygon, Arbitrum, Base, Optimism
+- 🪙 Detects **ERC-20 token holdings** on Ethereum mainnet
+- 📜 Checks **transaction history** on Ethereum mainnet
+- 📬 Sends real-time Telegram alerts on every match with full breakdown
 - ♾️ Infinite batch mode — automatically starts the next 100k batch when done
 - ⏳ Daily API limit aware — pauses and counts down to UTC midnight reset, then resumes
 - 💾 SQLite-backed state — no address is ever checked twice, even across restarts
@@ -21,12 +23,26 @@ Runs forever in infinite batches — fully autonomous, resumable, and rate-limit
 
 ## Supported Operating Systems
 
-| Platform                           | Supported |
-| ---------------------------------- | --------- |
-| macOS                              | ✅        |
-| Linux (Ubuntu, Debian, Arch, etc.) | ✅        |
-| Windows (via WSL recommended)      | ✅        |
-| Android (Termux)                   | ✅        |
+| Platform | Supported |
+|---|---|
+| macOS | ✅ |
+| Linux (Ubuntu, Debian, Arch, etc.) | ✅ |
+| Windows (via WSL recommended) | ✅ |
+| Android (Termux) | ✅ |
+
+---
+
+## Chains Scanned
+
+| Chain | Native Token | Checked |
+|---|---|---|
+| Ethereum | ETH | ✅ |
+| BNB Smart Chain | BNB | ✅ |
+| Polygon | MATIC | ✅ |
+| Arbitrum One | ETH | ✅ |
+| Base | ETH | ✅ |
+| Optimism | ETH | ✅ |
+| ERC-20 Tokens (Ethereum) | Any | ✅ |
 
 ---
 
@@ -46,8 +62,8 @@ Runs forever in infinite batches — fully autonomous, resumable, and rate-limit
 **1. Clone the repository**
 
 ```bash
-git clone https://github.com/yourusername/Comodo-Chians-Chians-eth.git
-cd Comodo-Chians-Chians-Chians-eth
+git clone https://github.com/kojoawesome/Comodo-Chians.git
+cd Comodo-Chians
 ```
 
 **2. Create and activate a virtual environment**
@@ -108,12 +124,12 @@ pkg install python
 pkg install clang libffi openssl rust
 ```
 
-**4. Transfer project files to your device**
+**4. Clone the repository**
 
 ```bash
-termux-setup-storage
-cp -r /sdcard/Comodo-Chians-Chians-Chians-eth ~/Comodo-Chians-Chians-Chians-eth
-cd ~/Comodo-Chians-Chians-Chians-eth
+pkg install git
+git clone https://github.com/kojoawesome/Comodo-Chians.git
+cd Comodo-Chians
 ```
 
 **5. Install dependencies**
@@ -140,10 +156,10 @@ python main.py
 
 ```bash
 pkg install tmux
-tmux new -s Comodo-Chians-Chianseth
+tmux new -s comodo
 python main.py
 # Detach: Ctrl+B then D
-# Reattach later: tmux attach -s Comodo-Chians-Chianseth
+# Reattach later: tmux attach -s comodo
 ```
 
 ---
@@ -152,25 +168,28 @@ python main.py
 
 All settings are in `config.py`:
 
-| Setting            | Default   | Description                   |
-| ------------------ | --------- | ----------------------------- |
-| `TARGET_COUNT`     | `100,000` | Addresses per batch           |
-| `BATCH_SIZE`       | `20`      | Addresses per Etherscan call  |
-| `RATE_LIMIT`       | `5`       | Max API requests per second   |
+| Setting | Default | Description |
+|---|---|---|
+| `TARGET_COUNT` | `100,000` | Addresses per batch |
+| `BATCH_SIZE` | `20` | Addresses per Etherscan call |
+| `RATE_LIMIT` | `5` | Max API requests per second |
 | `DAILY_CALL_LIMIT` | `100,000` | Etherscan free-tier daily cap |
+| `CHAINS` | 6 chains | Chains to scan (edit to add/remove) |
 
 ---
 
 ## How It Works
 
 ```
-Generate random 12-word seed phrase
+Generate random 12-word BIP39 seed phrase
         ↓
 Derive ETH address (BIP44: m/44'/60'/0'/0/0)
         ↓
-Batch check balance (20 at a time via getbalancemulti)
+Check native balance on 6 chains simultaneously (batched ×20)
         ↓
-Check transaction history (txlist, 1 result per address)
+Check ETH transaction history on mainnet
+        ↓
+Check ERC-20 token transfers on mainnet
         ↓
 Match? → Save to CSV + Send Telegram alert
         ↓
@@ -181,10 +200,17 @@ Repeat for 100,000 addresses → Batch complete → Start next batch
 
 ## Output
 
-| File          | Description                                                      |
-| ------------- | ---------------------------------------------------------------- |
-| `state.db`    | SQLite database — tracks every generated address and progress    |
-| `matches.csv` | All matched addresses with seed phrases, balance, and timestamps |
+| File | Description |
+|---|---|
+| `state.db` | SQLite database — tracks every generated address and progress |
+| `matches.csv` | All matched addresses with seed phrases, per-chain balances, and timestamps |
+
+### `matches.csv` columns
+
+```
+address, seed_phrase, matched_chains, ethereum_eth, bsc_bnb, polygon_matic,
+arbitrum_eth, base_eth, optimism_eth, has_eth_tx, has_token_tx, discovered_at
+```
 
 ### Telegram alert example
 
@@ -192,22 +218,29 @@ Repeat for 100,000 addresses → Batch complete → Start next batch
 🎯 Match Found!
 0x4B8E3F2A1C9D7E6B5A4F3E2D1C0B9A8F7E6D5C4B
 
-🔑 Seed: witch collapse practice feed shame open despair creek road again ice eager
-💰 Balance: 0.042500 ETH
-📜 Transactions: Yes
+🔑 Seed:
+witch collapse practice feed shame open despair creek road again ice eager
+
+💰 Balances:
+  • Ethereum: 0.042500 ETH
+  • Bsc: 0.310000 BNB
+
+📜 ETH Transactions: Yes
+🪙 ERC-20 Tokens: Yes
 ```
 
 ---
 
 ## Runtime Estimate
 
-| Step                         | API Calls   | Time (free tier) |
-| ---------------------------- | ----------- | ---------------- |
-| Balance checks (batched ×20) | 5,000       | ~17 min          |
-| Transaction checks           | 100,000     | ~5.5 hours       |
-| **Total per batch**          | **105,000** | **~5.8 hours**   |
+| Step | API Calls | Time (free tier) |
+|---|---|---|
+| Native balance checks × 6 chains (batched ×20) | 30,000 | ~1.7 hours |
+| ETH transaction checks | 100,000 | ~5.5 hours |
+| ERC-20 token checks | 100,000 | ~5.5 hours |
+| **Total per batch** | **230,000** | **~2.3 days** |
 
-The daily API limit (100,000 calls) is hit before one full batch completes. The scanner automatically pauses at the limit and resumes after the UTC midnight reset — no intervention needed.
+The daily API limit (100,000 calls) is hit well before one full batch completes. The scanner automatically pauses at the limit and resumes after the UTC midnight reset — no intervention needed.
 
 ---
 
@@ -219,18 +252,18 @@ Just re-run the script at any time:
 python main.py
 ```
 
-It will print `Resuming Batch #N from X / 100,000` and continue from where it left off.
+It will print `Resuming Batch #N from X / 100,000` and continue exactly where it left off.
 
 ---
 
 ## Dependencies
 
-| Package            | Purpose                           |
-| ------------------ | --------------------------------- |
-| `aiohttp`          | Async HTTP client                 |
-| `mnemonic`         | BIP39 seed phrase generation      |
-| `eth-account`      | BIP44 Ethereum address derivation |
-| `asyncio-throttle` | API rate limiting                 |
+| Package | Purpose |
+|---|---|
+| `aiohttp` | Async HTTP client |
+| `mnemonic` | BIP39 seed phrase generation |
+| `eth-account` | BIP44 Ethereum address derivation |
+| `asyncio-throttle` | API rate limiting |
 
 ---
 
