@@ -1,4 +1,4 @@
-# 🦎 Comodo ETH Wallet Scanner
+# 🦎 Comodo-Chians-Chians ETH Wallet Scanner
 
 An autonomous Ethereum wallet scanner that generates random BIP39 seed phrases, derives their addresses, and checks each one against the Etherscan API for any ETH balance or transaction history. Matches are instantly sent to your Telegram and saved to a CSV file.
 
@@ -46,8 +46,8 @@ Runs forever in infinite batches — fully autonomous, resumable, and rate-limit
 **1. Clone the repository**
 
 ```bash
-git clone https://github.com/yourusername/fox-eth.git
-cd fox-eth
+git clone https://github.com/yourusername/Comodo-Chians-Chians-eth.git
+cd Comodo-Chians-Chians-Chians-eth
 ```
 
 **2. Create and activate a virtual environment**
@@ -112,23 +112,26 @@ pkg install clang libffi openssl rust
 
 ```bash
 termux-setup-storage
-cp -r /sdcard/fox-eth ~/fox-eth
-cd ~/fox-eth
+cp -r /sdcard/Comodo-Chians-Chians-Chians-eth ~/Comodo-Chians-Chians-Chians-eth
+cd ~/Comodo-Chians-Chians-Chians-eth
 ```
 
 **5. Install dependencies**
 
+````bash
 ```bash
 pip install -r requirements.txt
-```
+````
 
 **6. Set environment variables**
+
+````bash
 
 ```bash
 export ETHERSCAN_API_KEY=your_etherscan_api_key
 export TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 export TELEGRAM_CHAT_ID=your_telegram_chat_id
-```
+````
 
 **7. Run**
 
@@ -140,10 +143,10 @@ python main.py
 
 ```bash
 pkg install tmux
-tmux new -s foxeth
+tmux new -s Comodo-Chians-Chianseth
 python main.py
 # Detach: Ctrl+B then D
-# Reattach later: tmux attach -s foxeth
+# Reattach later: tmux attach -s Comodo-Chians-Chianseth
 ```
 
 ---
