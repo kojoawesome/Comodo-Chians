@@ -11,7 +11,8 @@ DAILY_CALL_LIMIT = 100_000  # Etherscan daily API call cap
 # Each batch of 20 addresses costs 21 calls (1 balancemulti + 20 txlist)
 CALLS_PER_BATCH = 21
 
-ETHERSCAN_BASE = "https://api.etherscan.io/api"
+ETHERSCAN_BASE = "https://api.etherscan.io/v2/api"
+ETHERSCAN_CHAIN_ID = "1"  # Ethereum mainnet
 TELEGRAM_BASE  = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 DB_PATH  = "state.db"
 CSV_PATH = "matches.csv"

@@ -1,7 +1,7 @@
 import asyncio
 import aiohttp
 from asyncio_throttle import Throttler
-from config import ETHERSCAN_BASE, ETHERSCAN_API_KEY, RATE_LIMIT
+from config import ETHERSCAN_BASE, ETHERSCAN_API_KEY, ETHERSCAN_CHAIN_ID, RATE_LIMIT
 
 _throttler = Throttler(rate_limit=RATE_LIMIT, period=1.0)
 
@@ -9,6 +9,7 @@ _throttler = Throttler(rate_limit=RATE_LIMIT, period=1.0)
 async def _get(session: aiohttp.ClientSession, params: dict) -> dict:
     """Rate-limited GET to Etherscan with exponential backoff on transient errors."""
     params["apikey"] = ETHERSCAN_API_KEY
+    params["chainid"] = ETHERSCAN_CHAIN_ID
     for attempt in range(5):
         async with _throttler:
             try:
