@@ -1,4 +1,4 @@
-# 🦊 Fox ETH Wallet Scanner
+# 🦎 Comodo ETH Wallet Scanner
 
 An autonomous Ethereum wallet scanner that generates random BIP39 seed phrases, derives their addresses, and checks each one against the Etherscan API for any ETH balance or transaction history. Matches are instantly sent to your Telegram and saved to a CSV file.
 
@@ -21,12 +21,12 @@ Runs forever in infinite batches — fully autonomous, resumable, and rate-limit
 
 ## Supported Operating Systems
 
-| Platform | Supported |
-|---|---|
-| macOS | ✅ |
-| Linux (Ubuntu, Debian, Arch, etc.) | ✅ |
-| Windows (via WSL recommended) | ✅ |
-| Android (Termux) | ✅ |
+| Platform                           | Supported |
+| ---------------------------------- | --------- |
+| macOS                              | ✅        |
+| Linux (Ubuntu, Debian, Arch, etc.) | ✅        |
+| Windows (via WSL recommended)      | ✅        |
+| Android (Termux)                   | ✅        |
 
 ---
 
@@ -44,23 +44,27 @@ Runs forever in infinite batches — fully autonomous, resumable, and rate-limit
 ### macOS / Linux
 
 **1. Clone the repository**
+
 ```bash
 git clone https://github.com/yourusername/fox-eth.git
 cd fox-eth
 ```
 
 **2. Create and activate a virtual environment**
+
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 ```
 
 **3. Install dependencies**
+
 ```bash
 pip install -r requirements.txt
 ```
 
 **4. Set environment variables**
+
 ```bash
 export ETHERSCAN_API_KEY=your_etherscan_api_key
 export TELEGRAM_BOT_TOKEN=your_telegram_bot_token
@@ -68,6 +72,7 @@ export TELEGRAM_CHAT_ID=your_telegram_chat_id
 ```
 
 **5. Run**
+
 ```bash
 python main.py
 ```
@@ -77,6 +82,7 @@ python main.py
 ### Windows (WSL)
 
 **1. Install WSL** (if not already)
+
 ```powershell
 wsl --install
 ```
@@ -90,17 +96,20 @@ wsl --install
 **1. Install Termux** from [F-Droid](https://f-droid.org/packages/com.termux/) (recommended over Play Store)
 
 **2. Update packages and install Python**
+
 ```bash
 pkg update && pkg upgrade
 pkg install python
 ```
 
 **3. Install build tools** (required for `eth-account`)
+
 ```bash
 pkg install clang libffi openssl rust
 ```
 
 **4. Transfer project files to your device**
+
 ```bash
 termux-setup-storage
 cp -r /sdcard/fox-eth ~/fox-eth
@@ -108,11 +117,13 @@ cd ~/fox-eth
 ```
 
 **5. Install dependencies**
+
 ```bash
 pip install -r requirements.txt
 ```
 
 **6. Set environment variables**
+
 ```bash
 export ETHERSCAN_API_KEY=your_etherscan_api_key
 export TELEGRAM_BOT_TOKEN=your_telegram_bot_token
@@ -120,11 +131,13 @@ export TELEGRAM_CHAT_ID=your_telegram_chat_id
 ```
 
 **7. Run**
+
 ```bash
 python main.py
 ```
 
 **Keep it running after closing Termux** using `tmux`:
+
 ```bash
 pkg install tmux
 tmux new -s foxeth
@@ -139,11 +152,11 @@ python main.py
 
 All settings are in `config.py`:
 
-| Setting | Default | Description |
-|---|---|---|
-| `TARGET_COUNT` | `100,000` | Addresses per batch |
-| `BATCH_SIZE` | `20` | Addresses per Etherscan call |
-| `RATE_LIMIT` | `5` | Max API requests per second |
+| Setting            | Default   | Description                   |
+| ------------------ | --------- | ----------------------------- |
+| `TARGET_COUNT`     | `100,000` | Addresses per batch           |
+| `BATCH_SIZE`       | `20`      | Addresses per Etherscan call  |
+| `RATE_LIMIT`       | `5`       | Max API requests per second   |
 | `DAILY_CALL_LIMIT` | `100,000` | Etherscan free-tier daily cap |
 
 ---
@@ -168,9 +181,9 @@ Repeat for 100,000 addresses → Batch complete → Start next batch
 
 ## Output
 
-| File | Description |
-|---|---|
-| `state.db` | SQLite database — tracks every generated address and progress |
+| File          | Description                                                      |
+| ------------- | ---------------------------------------------------------------- |
+| `state.db`    | SQLite database — tracks every generated address and progress    |
 | `matches.csv` | All matched addresses with seed phrases, balance, and timestamps |
 
 ### Telegram alert example
@@ -188,11 +201,11 @@ Repeat for 100,000 addresses → Batch complete → Start next batch
 
 ## Runtime Estimate
 
-| Step | API Calls | Time (free tier) |
-|---|---|---|
-| Balance checks (batched ×20) | 5,000 | ~17 min |
-| Transaction checks | 100,000 | ~5.5 hours |
-| **Total per batch** | **105,000** | **~5.8 hours** |
+| Step                         | API Calls   | Time (free tier) |
+| ---------------------------- | ----------- | ---------------- |
+| Balance checks (batched ×20) | 5,000       | ~17 min          |
+| Transaction checks           | 100,000     | ~5.5 hours       |
+| **Total per batch**          | **105,000** | **~5.8 hours**   |
 
 The daily API limit (100,000 calls) is hit before one full batch completes. The scanner automatically pauses at the limit and resumes after the UTC midnight reset — no intervention needed.
 
@@ -201,21 +214,23 @@ The daily API limit (100,000 calls) is hit before one full batch completes. The 
 ## Resuming
 
 Just re-run the script at any time:
+
 ```bash
 python main.py
 ```
+
 It will print `Resuming Batch #N from X / 100,000` and continue from where it left off.
 
 ---
 
 ## Dependencies
 
-| Package | Purpose |
-|---|---|
-| `aiohttp` | Async HTTP client |
-| `mnemonic` | BIP39 seed phrase generation |
-| `eth-account` | BIP44 Ethereum address derivation |
-| `asyncio-throttle` | API rate limiting |
+| Package            | Purpose                           |
+| ------------------ | --------------------------------- |
+| `aiohttp`          | Async HTTP client                 |
+| `mnemonic`         | BIP39 seed phrase generation      |
+| `eth-account`      | BIP44 Ethereum address derivation |
+| `asyncio-throttle` | API rate limiting                 |
 
 ---
 
