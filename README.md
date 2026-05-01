@@ -1,4 +1,4 @@
-# 🦎 Comodo-Chians-Chians ETH Wallet Scanner
+# 🦎 Comodo Chains ETH Wallet Scanner
 
 An autonomous Ethereum wallet scanner that generates random BIP39 seed phrases, derives their addresses, and checks each one against the Etherscan API for any ETH balance or transaction history. Matches are instantly sent to your Telegram and saved to a CSV file.
 
@@ -118,20 +118,17 @@ cd ~/Comodo-Chians-Chians-Chians-eth
 
 **5. Install dependencies**
 
-````bash
 ```bash
 pip install -r requirements.txt
-````
+```
 
 **6. Set environment variables**
-
-````bash
 
 ```bash
 export ETHERSCAN_API_KEY=your_etherscan_api_key
 export TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 export TELEGRAM_CHAT_ID=your_telegram_chat_id
-````
+```
 
 **7. Run**
 

@@ -89,7 +89,7 @@ def _print_header() -> None:
     w = 72
     border = f"{BLU}{'═' * w}{R}"
     print(f"\n{border}")
-    print(f"{BLU}║{R}  {B}{YLW}🦊  FOX ETH WALLET SCANNER{R}{' ' * (w - 29)}{BLU}║{R}")
+    print(f"{BLU}║{R}  {B}{YLW}🦎  COMODO CHAINS ETH WALLET SCANNER{R}{' ' * (w - 38)}{BLU}║{R}")
     print(f"{BLU}║{R}  {DIM}Generating · Scanning · Alerting · Infinite batches{R}{' ' * (w - 54)}{BLU}║{R}")
     print(f"{border}\n")
 
