@@ -1,0 +1,4 @@
+aiohttp>=3.9
+mnemonic>=0.21
+eth-account>=0.11
+asyncio-throttle>=1.0
