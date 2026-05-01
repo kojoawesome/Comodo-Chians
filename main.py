@@ -94,6 +94,32 @@ def _print_header() -> None:
     print(f"{border}\n")
 
 
+def _select_word_count() -> int:
+    """Interactive menu to choose 12 or 24 word seed phrases."""
+    w = 48
+    border = f"{BLU}{'─' * w}{R}"
+    print(border)
+    print(f"{BLU}│{R}  {B}Select seed phrase length:{R}{' ' * (w - 28)}{BLU}│{R}")
+    print(f"{BLU}│{R}{' ' * (w)}{BLU}│{R}")
+    print(f"{BLU}│{R}  {GRN}{B}[1]{R}  12 words  {DIM}(128-bit entropy){R}{' ' * (w - 35)}{BLU}│{R}")
+    print(f"{BLU}│{R}  {YLW}{B}[2]{R}  24 words  {DIM}(256-bit entropy){R}{' ' * (w - 35)}{BLU}│{R}")
+    print(f"{BLU}│{R}{' ' * (w)}{BLU}│{R}")
+    print(border)
+
+    while True:
+        try:
+            choice = input(f"\n{B}Enter choice [1/2]:{R} ").strip()
+            if choice == "1":
+                return 12
+            elif choice == "2":
+                return 24
+            else:
+                print(f"{RED}Invalid choice. Enter 1 or 2.{R}")
+        except (KeyboardInterrupt, EOFError):
+            print()
+            sys.exit(0)
+
+
 def _wait_for_daily_reset(reset_at: float) -> None:
     """Block with a live countdown until the Etherscan daily limit resets."""
     asyncio.run(notifier.send_rate_limit_wait(int(reset_at - time.time())))
@@ -150,7 +176,7 @@ def _append_csv(result: dict) -> None:
 
 # ── Main loop ────────────────────────────────────────────────────────────────
 
-def run_batch(batch_number: int, total_generated: int, total_checked: int) -> int:
+def run_batch(batch_number: int, total_generated: int, total_checked: int, word_count: int = 12) -> int:
     """
     Run one full batch of TARGET_COUNT address checks.
     Returns total matches found in this batch.
@@ -158,7 +184,8 @@ def run_batch(batch_number: int, total_generated: int, total_checked: int) -> in
     matches    = 0
     start_time = time.monotonic()
 
-    _log("🚀", f"{GRN}{B}Batch #{batch_number} started{R} — scanning {TARGET_COUNT:,} addresses")
+    _log("🚀", f"{GRN}{B}Batch #{batch_number} started{R} — scanning {TARGET_COUNT:,} addresses "
+                f"({YLW}{word_count}-word seeds{R})")
     asyncio.run(notifier.send_new_batch_start(batch_number))
 
     while total_checked < TARGET_COUNT:
@@ -179,7 +206,7 @@ def run_batch(batch_number: int, total_generated: int, total_checked: int) -> in
         # ── Fill pending queue ────────────────────────────────────────────
         pending = state.get_pending_batch(BATCH_SIZE)
         while len(pending) < BATCH_SIZE and total_generated < TARGET_COUNT:
-            seed, address = generator.generate_wallet()
+            seed, address = generator.generate_wallet(word_count)
             if state.save_address(address, seed):
                 state.increment_generated()
                 total_generated += 1
@@ -235,16 +262,22 @@ def main() -> None:
     batch_number    = p["batch_number"]
     total_generated = p["total_generated"]
     total_checked   = p["total_checked"]
+    word_count      = p.get("mnemonic_strength", 12)
 
     if total_checked > 0:
         _log("↩️ ", f"{YLW}Resuming Batch #{batch_number} from "
-                     f"{total_checked:,} / {TARGET_COUNT:,}{R}")
+                     f"{total_checked:,} / {TARGET_COUNT:,} "
+                     f"({word_count}-word seeds){R}")
     else:
-        _log("▶️ ", f"{GRN}Starting Batch #{batch_number}{R}")
+        print()
+        word_count = _select_word_count()
+        state.set_mnemonic_strength(word_count)
+        print()
+        _log("▶️ ", f"{GRN}Starting Batch #{batch_number} with {word_count}-word seed phrases{R}")
 
     try:
         while True:
-            batch_matches = run_batch(batch_number, total_generated, total_checked)
+            batch_matches = run_batch(batch_number, total_generated, total_checked, word_count)
 
             # ── Batch complete ────────────────────────────────────────────
             sys.stdout.write("\n")
@@ -257,6 +290,7 @@ def main() -> None:
 
             # ── Start next batch ──────────────────────────────────────────
             batch_number = state.start_new_batch()
+            state.set_mnemonic_strength(word_count)  # carry choice into new batch
             total_generated = 0
             total_checked   = 0
             print()

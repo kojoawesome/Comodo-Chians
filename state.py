@@ -36,9 +36,10 @@ def init_db() -> None:
 
         # Migrate progress table
         for col, definition in [
-            ("batch_number",    "INTEGER DEFAULT 1"),
-            ("api_calls_today", "INTEGER DEFAULT 0"),
-            ("daily_reset_at",  "REAL    DEFAULT 0"),
+            ("batch_number",      "INTEGER DEFAULT 1"),
+            ("api_calls_today",   "INTEGER DEFAULT 0"),
+            ("daily_reset_at",    "REAL    DEFAULT 0"),
+            ("mnemonic_strength", "INTEGER DEFAULT 12"),
         ]:
             try:
                 con.execute(f"ALTER TABLE progress ADD COLUMN {col} {definition}")
@@ -57,8 +58,8 @@ def init_db() -> None:
 
         con.execute(
             "INSERT OR IGNORE INTO progress "
-            "(id, batch_number, total_generated, total_checked, api_calls_today, daily_reset_at) "
-            "VALUES (1, 1, 0, 0, 0, ?)",
+            "(id, batch_number, total_generated, total_checked, api_calls_today, daily_reset_at, mnemonic_strength) "
+            "VALUES (1, 1, 0, 0, 0, ?, 12)",
             (_next_midnight_utc(),),
         )
 
@@ -103,9 +104,14 @@ def get_progress() -> dict:
         con.row_factory = sqlite3.Row
         row = con.execute(
             "SELECT batch_number, total_generated, total_checked, "
-            "api_calls_today, daily_reset_at FROM progress WHERE id = 1"
+            "api_calls_today, daily_reset_at, mnemonic_strength FROM progress WHERE id = 1"
         ).fetchone()
     return dict(row) if row else {}
+
+
+def set_mnemonic_strength(word_count: int) -> None:
+    with _conn() as con:
+        con.execute("UPDATE progress SET mnemonic_strength = ? WHERE id = 1", (word_count,))
 
 
 def add_api_calls(n: int) -> None:
