@@ -40,8 +40,13 @@ async def _check_balances(session: aiohttp.ClientSession, addresses: list[str]) 
         "address": ",".join(addresses),
         "tag": "latest",
     })
+    raw = data.get("result")
+    if not isinstance(raw, list):
+        return {}
     result = {}
-    for item in data.get("result") or []:
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
         try:
             result[item["account"]] = int(item["balance"]) > 0
         except (KeyError, ValueError):
