@@ -33,7 +33,8 @@ def init_db() -> None:
                 total_checked    INTEGER DEFAULT 0
             );
         """)
-        # Migrate: add new columns if they don't exist yet
+
+        # Migrate progress table
         for col, definition in [
             ("batch_number",    "INTEGER DEFAULT 1"),
             ("api_calls_today", "INTEGER DEFAULT 0"),
@@ -42,7 +43,18 @@ def init_db() -> None:
             try:
                 con.execute(f"ALTER TABLE progress ADD COLUMN {col} {definition}")
             except Exception:
-                pass  # column already exists
+                pass
+
+        # Migrate addresses table
+        for col, definition in [
+            ("has_token_tx",    "INTEGER DEFAULT 0"),
+            ("matched_chains",  "TEXT    DEFAULT ''"),
+        ]:
+            try:
+                con.execute(f"ALTER TABLE addresses ADD COLUMN {col} {definition}")
+            except Exception:
+                pass
+
         con.execute(
             "INSERT OR IGNORE INTO progress "
             "(id, batch_number, total_generated, total_checked, api_calls_today, daily_reset_at) "
@@ -75,11 +87,13 @@ def get_pending_batch(n: int) -> list[dict]:
     return [dict(r) for r in rows]
 
 
-def mark_checked(address: str, has_balance: bool, has_tx: bool) -> None:
+def mark_checked(address: str, has_balance: bool, has_tx: bool,
+                 has_token_tx: bool = False, matched_chains: str = "") -> None:
     with _conn() as con:
         con.execute(
-            "UPDATE addresses SET checked = 1, has_balance = ?, has_tx = ? WHERE address = ?",
-            (int(has_balance), int(has_tx), address),
+            "UPDATE addresses SET checked=1, has_balance=?, has_tx=?, "
+            "has_token_tx=?, matched_chains=? WHERE address=?",
+            (int(has_balance), int(has_tx), int(has_token_tx), matched_chains, address),
         )
         con.execute("UPDATE progress SET total_checked = total_checked + 1 WHERE id = 1")
 
@@ -95,16 +109,11 @@ def get_progress() -> dict:
 
 
 def add_api_calls(n: int) -> None:
-    """Increment today's API call counter."""
     with _conn() as con:
         con.execute("UPDATE progress SET api_calls_today = api_calls_today + ? WHERE id = 1", (n,))
 
 
 def maybe_reset_daily_calls() -> bool:
-    """
-    If the daily reset timestamp has passed, zero out api_calls_today and
-    set a new reset timestamp. Returns True if a reset happened.
-    """
     p = get_progress()
     if time.time() >= p["daily_reset_at"]:
         with _conn() as con:
@@ -117,15 +126,11 @@ def maybe_reset_daily_calls() -> bool:
 
 
 def start_new_batch() -> int:
-    """Clear addresses, reset counters, increment batch number. Returns new batch number."""
     with _conn() as con:
         con.execute("DELETE FROM addresses")
         con.execute(
-            "UPDATE progress SET "
-            "batch_number = batch_number + 1, "
-            "total_generated = 0, "
-            "total_checked = 0 "
-            "WHERE id = 1"
+            "UPDATE progress SET batch_number = batch_number + 1, "
+            "total_generated = 0, total_checked = 0 WHERE id = 1"
         )
         row = con.execute("SELECT batch_number FROM progress WHERE id = 1").fetchone()
     return row[0]

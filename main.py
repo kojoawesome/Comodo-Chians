@@ -119,19 +119,31 @@ def _wait_for_daily_reset(reset_at: float) -> None:
 def _ensure_csv() -> None:
     if not os.path.exists(CSV_PATH):
         with open(CSV_PATH, "w", newline="") as f:
-            csv.writer(f).writerow(
-                ["address", "seed_phrase", "has_balance", "balance_eth", "has_tx", "discovered_at"]
-            )
+            csv.writer(f).writerow([
+                "address", "seed_phrase",
+                "matched_chains",
+                "ethereum_eth", "bsc_bnb", "polygon_matic",
+                "arbitrum_eth", "base_eth", "optimism_eth",
+                "has_eth_tx", "has_token_tx",
+                "discovered_at",
+            ])
 
 
 def _append_csv(result: dict) -> None:
+    cb = result.get("chain_balances", {})
     with open(CSV_PATH, "a", newline="") as f:
         csv.writer(f).writerow([
             result["address"],
             result["seed_phrase"],
-            result["has_balance"],
-            result.get("balance_eth", 0.0),
+            ",".join(result.get("matched_chains", [])),
+            cb.get("ethereum", 0.0),
+            cb.get("bsc", 0.0),
+            cb.get("polygon", 0.0),
+            cb.get("arbitrum", 0.0),
+            cb.get("base", 0.0),
+            cb.get("optimism", 0.0),
             result["has_tx"],
+            result["has_token_tx"],
             datetime.utcnow().isoformat(),
         ])
 
@@ -186,17 +198,24 @@ def run_batch(batch_number: int, total_generated: int, total_checked: int) -> in
                 matches += 1
                 _append_csv(r)
                 sys.stdout.write("\n")
+                chains_str = ",".join(r.get("matched_chains", [])) or "none"
                 _log(
                     "🎯",
                     f"{GRN}{B}Match!{R}  {r['address']}  "
-                    f"{YLW}{r.get('balance_eth', 0):.6f} ETH{R}  "
+                    f"Chains: {YLW}{chains_str}{R}  "
+                    f"Tokens: {'Yes' if r['has_token_tx'] else 'No'}  "
                     f"TX: {'Yes' if r['has_tx'] else 'No'}",
                 )
                 asyncio.run(notifier.send_match(
                     r["address"], r["seed_phrase"],
-                    r.get("balance_eth", 0.0), r["has_tx"],
+                    r.get("chain_balances", {}),
+                    r["has_tx"], r["has_token_tx"],
                 ))
-            state.mark_checked(r["address"], r["has_balance"], r["has_tx"])
+            state.mark_checked(
+                r["address"], r["has_balance"], r["has_tx"],
+                r.get("has_token_tx", False),
+                ",".join(r.get("matched_chains", [])),
+            )
             total_checked += 1
 
         # ── Progress line ─────────────────────────────────────────────────
